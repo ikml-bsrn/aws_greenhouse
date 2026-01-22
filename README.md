@@ -2,6 +2,7 @@
  
 ## Architectural Diagram
 **Figure 1**
+
 _Architectural Diagram of the Cloud System_
 
 <img width="468" height="208" alt="image" src="https://github.com/user-attachments/assets/f4716c47-bfbd-44ad-87e1-61888c701631" />
@@ -35,6 +36,7 @@ On the other hand, Amazon Athena was selected as the serverless query engine to 
 ## Data Ingestion Pipeline
 
 **Figure 2**
+
 _Data Ingestion Pipeline Diagram_
 
 <img width="419" height="350" alt="image" src="https://github.com/user-attachments/assets/efd522ef-b8cf-4fb7-8103-b3a6099cbf23" />
@@ -47,6 +49,54 @@ Firstly, instead of ingesting raw API directly into storage, AWS Data Firehose t
 On the other hand, this service is designed to recover automatically from the transient failures. The Producer on EC2 wraps all network operations in robust exception handling blocks (i.e., try-except). In the event of API outage or network partition (Connection Timeout), the service logs the error to CloudWatch (see Figure 12) and pauses execution (i.e., 60 seconds) before attempting to reconnect, ensuring the system remains robust. 
 
 Moreover, Data Firehose acts as a temporal buffer between the Producer and S3. If S3 experiences a momentary throughput limit or latency spike, Firehose holds the data in its internal buffer for up to 24 hours and retries the delivery until successful. This prevents data loss even in the event of a rare S3 downtime.
+
+## Implementation
+
+### Connecting to the Greenhouse IoT API Stream
+
+**Figure 3**
+
+_Connecting to the Greenhouse IoT API Stream & Ingesting Data_
+
+<img width="468" height="400" alt="image" src="https://github.com/user-attachments/assets/41526a12-6a25-4e95-bbf5-cbde74f54c27" />
+ 
+**Figure 3** illustrates a Python function which establishes a connection to the Greenhouse IoT data stream and awaits incoming data before ingesting it into Amazon Data Firehose. Furthermore, it effectively manages and logs potential errors, including network-related issues, API connection retries, and unexpected errors.
+
+### Amazon Data Firehose
+**Figure 4**
+
+_Firehose Stream Details in AWS_
+
+<img width="442" height="153" alt="image" src="https://github.com/user-attachments/assets/3a9f181c-7bff-4e3c-9c04-8436466292d2" />
+
+# Amazon S3
+**Figure 5**
+
+_Processed JSON Files Stored in S3_
+
+<img width="474" height="412" alt="image" src="https://github.com/user-attachments/assets/389dbf5a-3e1b-419e-9993-180800271dbb" />
+
+### Amazon Glue & Athena
+**Figure 6**
+
+_Querying Data in the AWS Glue Data Catalog Database_
+
+<img width="409" height="307" alt="image" src="https://github.com/user-attachments/assets/a04d1698-d794-49e0-a444-906f2a04e130" />
+
+### Amazon CloudWatch
+**Figure 7**
+
+_CloudWatch Log Events_
+
+<img width="468" height="252" alt="image" src="https://github.com/user-attachments/assets/69dfd2b4-215f-4403-b523-7b4d5214ee74" />
+
+ 
+
+
+
+
+
+
 
 
 
