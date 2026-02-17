@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 
 # Configure CloudWatch logging
 try:
-    logger.addHandler(watchtower.CloudWatchLogHandler(log_group="greenhouse_producer_log"))
+    logger.addHandler(watchtower.CloudWatchLogHandler(log_group_name="greenhouse_producer_log"))
     logger.info("CloudWatch logging connection established")
 except Exception as e:
     logger.error(f"Failed to connect to CloudWatch: {e}")
 
 # ---------- Functions ----------
-def ingest_to_firehose(data):
+def ingest_to_firehose(data, stream_name="greenhouse_stream"):
     """
     Send data to Amazon Kinesis Data Firehose.
     Args:
@@ -31,14 +31,16 @@ def ingest_to_firehose(data):
         firehose = boto3.client('firehose', region_name='eu-north-1')
 
         # Send the data to Kinesis Data Firehose
-        firehose.put_record(
-            DeliveryStreamName="greenhouse_stream",
+        response = firehose.put_record(
+            DeliveryStreamName=stream_name,
             Record={
                 'Data': str(data) + '\n' # append newline character 
                                          # for proper record separation
             })
         
-        logger.info(f"A datapoint has been sent to Firehose.")
+        logger.info(f"A datapoint has been sent to Firehose. Response: {response.get('RecordId')}")
+
+        return response.get('RecordId')
 
     # Error handling
     except Exception as e:

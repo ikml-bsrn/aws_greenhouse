@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: greenhouse-data-ingestion
+Version: 0.1.0
+Summary: A package for ingesting Greenhouse IoT data into AWS S3 Bucket via Data Firehose
+Home-page: https://github.com/ikml-bsrn/aws_greenhouse
+Author: IB
+Requires-Dist: boto3
+Requires-Dist: moto
+Requires-Dist: requests
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: summary
