@@ -1,11 +1,9 @@
 import requests
 import boto3
+from moto import mock_aws # for mocking AWS services
 import logging
 import time
 import watchtower # For logging to CloudWatch
-
-# Connect to Amazon Data Firehose
-firehose = boto3.client('firehose', region_name='eu-north-1')
 
 # Setup logging
 logging.basicConfig(
@@ -22,7 +20,6 @@ except Exception as e:
     logger.error(f"Failed to connect to CloudWatch: {e}")
 
 # ---------- Functions ----------
-
 def ingest_to_firehose(data):
     """
     Send data to Amazon Kinesis Data Firehose.
@@ -30,6 +27,9 @@ def ingest_to_firehose(data):
         data (str): The raw JSON data to send.
     """
     try:
+        # Connect to Amazon Data Firehose
+        firehose = boto3.client('firehose', region_name='eu-north-1')
+
         # Send the data to Kinesis Data Firehose
         firehose.put_record(
             DeliveryStreamName="greenhouse_stream",
