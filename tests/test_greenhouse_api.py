@@ -3,8 +3,17 @@
 
 import requests
 import json
-from src.ingest_data import connectToAPIStream, ingestToFirehose
+import pytest
+from src.ingest_data import connectToAPIStream
 
+def isAPIStreamAvailable(api_url):
+    try:
+        requests.get(api_url, timeout=5)
+        return True
+    except requests.RequestException:
+        return False
+
+@pytest.mark.skipif(not isAPIStreamAvailable("http://greenhouse.shef.ac.uk:7070/stream"), reason="Greenhouse API stream is not available.")
 def test_greenhouse_api_stream():
 
     api_url = "http://greenhouse.shef.ac.uk:7070/stream"
