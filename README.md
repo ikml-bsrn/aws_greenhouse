@@ -1,4 +1,6 @@
 # AWS Automated Greenhouse IoT Data Ingestion System
+
+[ Update: The Greenhouse IoT API hosted by shef.ac.uk is now deprecated. Therefore, the API connection test in this project is skipped yet remains in the source code. See GitHub Actions for more. :)]
  
 ## Architectural Diagram
 **Figure 1**
