@@ -1,11 +1,10 @@
 import boto3
 import json
-import os
 from moto import mock_aws
 
 @mock_aws
 def test_ingest_to_firehose():
-    from src.ingest_data import ingest_to_firehose
+    from src.ingest_data import ingestToFirehose
 
     try:
         # create a mock S3 bucket for testing
@@ -56,7 +55,7 @@ def test_ingest_to_firehose():
             "indoor_co2": 1130.0
         })
 
-        response = ingest_to_firehose(test_data, stream_name="test-greenhouse-stream")
+        response = ingestToFirehose(test_data, stream_name="test-greenhouse-stream")
 
         print("Test data delivered. Response ID:", response)
 

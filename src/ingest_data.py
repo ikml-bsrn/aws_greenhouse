@@ -15,12 +15,49 @@ logger = logging.getLogger(__name__)
 # Configure CloudWatch logging
 try:
     logger.addHandler(watchtower.CloudWatchLogHandler(log_group_name="greenhouse_producer_log"))
-    logger.info("CloudWatch logging connection established")
+    logger.info("CloudWatch logging connection established.")
 except Exception as e:
     logger.error(f"Failed to connect to CloudWatch: {e}")
 
 # ---------- Functions ----------
-def ingest_to_firehose(data, stream_name="greenhouse_stream"):
+def connectToAPIStream(api_url="http://greenhouse.shef.ac.uk:7070/stream", max_retries=None):
+    retry_count = 0
+
+    while max_retries is None or retry_count < max_retries:
+        try:
+            logger.info("Connecting to greenhouse data stream...")
+
+            with requests.get(api_url, stream=True) as response:
+                
+                for line in response.iter_lines(decode_unicode=True): # Decode the lines
+                    # Note: Pings are ignored from the server
+                    # Accept the line which starts with "data: "
+                    if line and line.startswith("data: "):
+                            
+                            raw_json = line.replace("data: ", "") # Extract only the JSON part
+                            
+                            yield raw_json
+
+        # Error handling
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Connection error: {e}")
+            retry_count += 1
+            if max_retries and retry_count >= max_retries:
+                raise Exception("Maximum retry attempts reached. Exiting.")
+            time.sleep(5)
+
+        except KeyboardInterrupt:
+            logger.info("Session interrupted. Shutting down...")
+            break
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            retry_count += 1
+            if max_retries and retry_count >= max_retries:
+                raise Exception("Maximum retry attempts reached. Exiting.")
+            time.sleep(10)
+
+def ingestToFirehose(data, stream_name="greenhouse_stream"):
     """
     Send data to Amazon Kinesis Data Firehose.
     Args:
@@ -45,36 +82,3 @@ def ingest_to_firehose(data, stream_name="greenhouse_stream"):
     # Error handling
     except Exception as e:
         logger.error(f"Error sending data to S3: {e}")
-
-def connect_to_api_stream(api_url="http://greenhouse.shef.ac.uk:7070/stream"):
-    while True:
-        try:
-            logger.info("Connecting to greenhouse data stream...")
-
-            with requests.get(api_url, stream=True) as response:
-                for line in response.iter_lines(decode_unicode=True): # Decode the lines
-                    if line:
-                        # Note: Pings are ignored from the server
-                        # Accept the line which starts with "data: "
-                        if line.startswith("data: "):
-
-                            raw_json = line.replace("data: ", "") # Extract only the JSON part
-
-                            ingest_to_firehose(raw_json)
-
-        # Error handling
-        except requests.RequestException as e:
-            logger.error(f"Connection error: {e}")
-            logger.info("Reconnecting in 10 seconds...")
-            time.sleep(10)
-
-        except KeyboardInterrupt:
-            logger.info("Session interrupted. Shutting down...")
-            break
-
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            time.sleep(10)
-
-if __name__ == "__main__":
-    connect_to_api_stream(api_url="http://greenhouse.shef.ac.uk:7070/stream")
